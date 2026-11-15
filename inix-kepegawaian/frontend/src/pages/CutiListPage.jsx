@@ -7,6 +7,7 @@ import api from '../services/api';
 export default function CutiListPage() {
   const { user } = useAuth();
   const [cutiList, setCutiList] = useState([]);
+  const [kuotaData, setKuotaData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionMessage, setActionMessage] = useState('');
 
@@ -18,6 +19,15 @@ export default function CutiListPage() {
       setLoading(true);
       const res = await api.get('/cuti');
       setCutiList(res.data);
+
+      if (isPegawai) {
+        try {
+          const kuotaRes = await api.get('/cuti/kuota');
+          setKuotaData(kuotaRes.data);
+        } catch (e) {
+          console.error('Error fetching kuota cuti:', e);
+        }
+      }
     } catch (err) {
       console.error('Error fetching cuti:', err);
     } finally {
@@ -27,7 +37,7 @@ export default function CutiListPage() {
 
   useEffect(() => {
     fetchCuti();
-  }, []);
+  }, [isPegawai]);
 
   const handleUpdateStatus = async (id, status) => {
     try {
@@ -46,11 +56,70 @@ export default function CutiListPage() {
       heroTitle="Pengajuan Cuti & Izin Kerja Pegawai PT INIX"
       heroSubtitle="Sistem alur persetujuan cuti digital terintegrasi untuk seluruh jajaran pegawai dan manajerial PT INIX."
       highlightPills={[
-        '⏱️ Review Cepat & Transparan',
+        '⏱️ Kuota Tahunan 12 Hari',
         '💼 Alur Persetujuan Manajerial',
         '📋 Status Realtime'
       ]}
     >
+      {/* Banner Kuota Cuti Tahunan untuk Pegawai */}
+      {isPegawai && kuotaData && (
+        <section
+          style={{
+            background: '#ffffff',
+            border: '1px solid #e8edf5',
+            borderRadius: '8px',
+            padding: '1.25rem 1.5rem',
+            marginBottom: '1.5rem',
+            boxShadow: '0 4px 15px rgba(32,78,207,0.07)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '1rem'
+          }}
+          aria-label="Ringkasan Kuota Cuti Tahunan"
+        >
+          <div>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#162447', marginBottom: '0.25rem' }}>
+              Informasi Kuota Cuti Tahunan ({kuotaData.tahun})
+            </h3>
+            <p style={{ fontSize: '0.85rem', color: '#64748b' }}>
+              Setiap pegawai berhak atas kuota cuti tahunan reguler sejumlah 12 hari kerja per tahun.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
+            <div style={{ textAlign: 'center' }}>
+              <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>KUOTA RESMI</span>
+              <strong style={{ fontSize: '1.3rem', color: '#162447' }} data-testid="kuota-tahunan">
+                {kuotaData.kuota_tahunan} Hari
+              </strong>
+            </div>
+
+            <div style={{ textAlign: 'center' }}>
+              <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>TERPAKAI</span>
+              <strong style={{ fontSize: '1.3rem', color: '#16a34a' }}>
+                {kuotaData.cuti_approved_hari} Hari
+              </strong>
+            </div>
+
+            <div style={{ textAlign: 'center' }}>
+              <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>PENDING</span>
+              <strong style={{ fontSize: '1.3rem', color: '#ff7a00' }}>
+                {kuotaData.cuti_pending_hari} Hari
+              </strong>
+            </div>
+
+            <div style={{ textAlign: 'center', background: '#eff6ff', padding: '6px 14px', borderRadius: '6px', border: '1px solid #bfdbfe' }}>
+              <span style={{ display: 'block', fontSize: '0.75rem', color: '#1e40af', fontWeight: 700 }}>SISA KUOTA</span>
+              <strong style={{ fontSize: '1.35rem', color: '#204ecf' }} data-testid="sisa-kuota-cuti">
+                {kuotaData.sisa_kuota} Hari
+              </strong>
+            </div>
+          </div>
+        </section>
+      )}
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#162447' }}>Daftar Permohonan Cuti</h2>

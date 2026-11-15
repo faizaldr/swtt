@@ -34,35 +34,40 @@ async function runSeed() {
         nip: 'NIP-2025-001',
         nama_lengkap: 'Andi Wijaya',
         jabatan: 'Staff HR',
-        status: 'aktif'
+        status: 'aktif',
+        kuota_cuti: 12
       },
       {
         user_id: users[2].id, // manager@inix.com
         nip: 'NIP-2025-002',
         nama_lengkap: 'Siti Rahayu',
         jabatan: 'Manajer IT',
-        status: 'aktif'
+        status: 'aktif',
+        kuota_cuti: 12
       },
       {
         user_id: null,
         nip: 'NIP-2025-003',
         nama_lengkap: 'Rudi Hermawan',
         jabatan: 'Lead QA Automation',
-        status: 'nonaktif'
+        status: 'nonaktif',
+        kuota_cuti: 12
       },
       {
         user_id: users[3].id, // pegawai@inix.com
         nip: 'NIP-2025-004',
         nama_lengkap: 'Budi Santoso',
         jabatan: 'AI Engineer',
-        status: 'aktif'
+        status: 'aktif',
+        kuota_cuti: 12
       },
       {
         user_id: null,
         nip: 'NIP-2025-005',
         nama_lengkap: 'Maya Putri',
         jabatan: 'Staff Data Science',
-        status: 'aktif'
+        status: 'aktif',
+        kuota_cuti: 12
       }
     ]);
     console.log('✓ 5 Pegawai berhasil di-seed.');

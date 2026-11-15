@@ -8,7 +8,10 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const [totalPegawai, setTotalPegawai] = useState(0);
   const [cutiPending, setCutiPending] = useState(0);
+  const [kuotaData, setKuotaData] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const isPegawai = user?.role === 'pegawai';
 
   useEffect(() => {
     async function fetchDashboardData() {
@@ -20,6 +23,15 @@ export default function DashboardPage() {
         setTotalPegawai(pegawaiRes.data.length || 0);
         const pendingCount = (cutiRes.data || []).filter(c => c.status === 'PENDING').length;
         setCutiPending(pendingCount);
+
+        if (isPegawai) {
+          try {
+            const kuotaRes = await api.get('/cuti/kuota');
+            setKuotaData(kuotaRes.data);
+          } catch (e) {
+            console.error('Error fetching kuota on dashboard:', e);
+          }
+        }
       } catch (err) {
         console.error('Error fetching dashboard stats:', err);
       } finally {
@@ -27,7 +39,7 @@ export default function DashboardPage() {
       }
     }
     fetchDashboardData();
-  }, []);
+  }, [isPegawai]);
 
   return (
     <Layout
@@ -37,7 +49,7 @@ export default function DashboardPage() {
       highlightPills={[
         '⭐ INIX Learning Culture',
         '💼 Internal HR & Talent Management',
-        '🚀 Continuous Training Program'
+        '🚀 Kuota Cuti Tahunan: 12 Hari'
       ]}
     >
       <div style={{ marginBottom: '2rem' }}>
@@ -67,20 +79,32 @@ export default function DashboardPage() {
         </div>
 
         <div className="metric-card">
-          <span className="metric-card-title">PROGRAM PELATIHAN TERPILIH</span>
-          <div className="metric-card-value" style={{ color: '#16a34a' }}>32 JP</div>
-          <span className="metric-card-desc">AI Engineer & QA Automation Bootcamp</span>
+          <span className="metric-card-title">
+            {isPegawai && kuotaData ? 'SISA KUOTA CUTI TAHUNAN' : 'PROGRAM PELATIHAN TERPILIH'}
+          </span>
+          <div className="metric-card-value" style={{ color: '#16a34a' }}>
+            {isPegawai && kuotaData ? `${kuotaData.sisa_kuota} / 12 Hari` : '32 JP'}
+          </div>
+          <span className="metric-card-desc">
+            {isPegawai && kuotaData
+              ? `Terpakai: ${kuotaData.cuti_approved_hari} hari, Pending: ${kuotaData.cuti_pending_hari} hari`
+              : 'AI Engineer & QA Automation Bootcamp'}
+          </span>
           <div style={{ marginTop: '1rem' }}>
-            <span className="badge-status badge-approved">Kurikulum Terverifikasi</span>
+            {isPegawai ? (
+              <Link to="/cuti/ajukan" className="btn-primary-sm">+ Ajukan Cuti</Link>
+            ) : (
+              <span className="badge-status badge-approved">Kurikulum Terverifikasi</span>
+            )}
           </div>
         </div>
       </section>
 
       {/* Info Section */}
       <section style={{ background: '#ffffff', border: '1px solid #e8edf5', borderRadius: '8px', padding: '1.5rem', boxShadow: '0 4px 15px rgba(32,78,207,0.07)' }}>
-        <h2 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '0.75rem' }}>Panduan Pengujian Sistem Kepegawaian</h2>
+        <h2 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '0.75rem' }}>Kebijakan Kuota Cuti Tahunan PT INIX</h2>
         <p style={{ color: '#4b5563', fontSize: '0.9rem', lineHeight: 1.6 }}>
-          Aplikasi ini dirancang sebagai instrumen pengujian Software Testing komprehensif. Pastikan seluruh interaksi tombol form, validasi NIP, pembuatan data pegawai, verifikasi persetujuan cuti Manajer, dan pengujian beban API (k6) serta scan keamanan (OWASP ZAP) dilakukan sesuai skenario pelatihan.
+          Setiap pegawai berstatus aktif berhak atas kuota cuti tahunan maksimal <strong>12 hari kerja</strong>. Pengajuan cuti yang melebihi sisa kuota tahun berjalan akan ditolak secara otomatis oleh sistem validasi. Seluruh persetujuan akhir berada pada wewenang Manajer departemen terkait.
         </p>
       </section>
     </Layout>

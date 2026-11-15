@@ -62,7 +62,7 @@ Aplikasi dipangkas menjadi 3 modul esensial untuk kebutuhan testing tools:
 | FR-002 | Sistem menampilkan pesan error jika username atau password salah atau akun nonaktif | High | Autentikasi |
 | FR-003 | Admin dan HR dapat melihat daftar, menambah, mengubah, dan menghapus data pegawai | High | Data Pegawai |
 | FR-004 | Sistem memvalidasi NIP pegawai harus unik dan field wajib (Nama, Jabatan) tidak boleh kosong | High | Data Pegawai |
-| FR-005 | Pegawai dapat mengajukan cuti dengan menentukan tanggal mulai, tanggal selesai, dan alasan | High | Pengajuan Cuti |
+| FR-005 | Pegawai dapat mengajukan cuti dengan menentukan tanggal mulai, tanggal selesai, dan alasan dengan batasan kuota cuti tahunan 12 hari | High | Pengajuan Cuti |
 | FR-006 | Manajer dapat menyetujui (*Approve*) atau menolak (*Reject*) pengajuan cuti pegawai | High | Pengajuan Cuti |
 | FR-007 | Akses halaman dan API dibatasi berdasarkan role (Admin, HR, Manajer, Pegawai) | High | Autentikasi |
 
@@ -82,7 +82,7 @@ Aplikasi dipangkas menjadi 3 modul esensial untuk kebutuhan testing tools:
 | US-001 | *As a* **User**, *I want to* login with my credentials, *so that* I can access the system | - Validasi field kosong <br> - Kredensial valid masuk ke dashboard <br> - Kredensial tidak valid memunculkan error message |
 | US-002 | *As an* **HR/Admin**, *I want to* add a new employee, *so that* employee records are registered | - Field NIP unik dan wajib diisi <br> - Data baru tersimpan di database dan muncul di daftar |
 | US-003 | *As an* **HR/Admin**, *I want to* edit and delete employee records, *so that* data remains accurate | - Data terupdate realtime di UI <br> - Konfirmasi sebelum data dihapus |
-| US-004 | *As a* **Pegawai**, *I want to* submit a leave request, *so that* I can take my planned leave | - Tanggal selesai harus ≥ tanggal mulai <br> - Pengajuan berstatus default 'PENDING' |
+| US-004 | *As a* **Pegawai**, *I want to* submit a leave request, *so that* I can take my planned leave | - Tanggal selesai harus ≥ tanggal mulai <br> - Durasi hari cuti tidak melebihi sisa kuota tahunan (12 hari/tahun) <br> - Pengajuan berstatus default 'PENDING' |
 | US-005 | *As a* **Manajer**, *I want to* approve or reject leave requests, *so that* leave status is updated | - Manajer dapat memilih Approve/Reject <br> - Status pengajuan cuti berubah sesuai keputusan |
 
 ---
@@ -90,27 +90,28 @@ Aplikasi dipangkas menjadi 3 modul esensial untuk kebutuhan testing tools:
 ## 5. ERD Database PT INIX (Minimalis)
 
 ```
-┌──────────────┐       ┌──────────────┐
-│    users     │       │   pegawai    │
-├──────────────┤       ├──────────────┤
-│ id (PK)      │◄──┐   │ id (PK)      │
-│ username     │   └───│ user_id (FK) │
-│ password     │       │ nip (UNIQUE) │
-│ role         │       │ nama_lengkap │
-│ is_active    │       │ jabatan      │
-└──────────────┘       │ status       │
-                       └──────┬───────┘
-                              │
-                       ┌──────▼───────┐
-                       │     cuti     │
-                       ├──────────────┤
-                       │ id (PK)      │
-                       │ pegawai_id   │
-                       │ tgl_mulai    │
-                       │ tgl_selesai  │
-                       │ alasan       │
-                       │ status       │ (PENDING/APPROVED/REJECTED)
-                       └──────────────┘
+┌──────────────┐       ┌──────────────────┐
+│    users     │       │     pegawai      │
+├──────────────┤       ├──────────────────┤
+│ id (PK)      │◄──┐   │ id (PK)          │
+│ username     │   └───│ user_id (FK)     │
+│ password     │       │ nip (UNIQUE)     │
+│ role         │       │ nama_lengkap     │
+│ is_active    │       │ jabatan          │
+└──────────────┘       │ status           │
+                       │ kuota_cuti (12)  │
+                       └────────┬─────────┘
+                                │
+                       ┌────────▼─────────┐
+                       │       cuti       │
+                       ├──────────────────┤
+                       │ id (PK)          │
+                       │ pegawai_id       │
+                       │ tgl_mulai        │
+                       │ tgl_selesai      │
+                       │ alasan           │
+                       │ status           │ (PENDING/APPROVED/REJECTED)
+                       └──────────────────┘
 ```
 
 ---
@@ -127,7 +128,8 @@ Aplikasi dipangkas menjadi 3 modul esensial untuk kebutuhan testing tools:
 | PUT | `/api/pegawai/{id}/` | Memperbarui data pegawai | Bearer JWT (HR/Admin) |
 | DELETE | `/api/pegawai/{id}/` | Menghapus data pegawai | Bearer JWT (Admin) |
 | GET | `/api/cuti/` | Menampilkan daftar cuti | Bearer JWT (All) |
-| POST | `/api/cuti/` | Mengajukan permohonan cuti baru | Bearer JWT (Pegawai) |
+| GET | `/api/cuti/kuota` | Menampilkan sisa kuota cuti tahunan pegawai | Bearer JWT (Pegawai) |
+| POST | `/api/cuti/` | Mengajukan permohonan cuti baru (validasi kuota max 12 hari) | Bearer JWT (Pegawai) |
 | PATCH | `/api/cuti/{id}/status/` | Update status cuti (Approve/Reject) | Bearer JWT (Manajer) |
 
 ---

@@ -139,7 +139,8 @@ Mengacu langsung pada layout dan komponen `https://eduparx.id/home/training?cata
 
 **Modul 3: Pengajuan Cuti**
 - GET `/api/cuti/` — list cuti (Pegawai: milik sendiri; Manajer/HR/Admin: semua)
-- POST `/api/cuti/` — ajukan cuti (Pegawai only)
+- GET `/api/cuti/kuota` — cek sisa kuota cuti tahunan pegawai (default 12 hari/tahun)
+- POST `/api/cuti/` — ajukan cuti (Pegawai only, validasi durasi tidak melebihi sisa kuota tahunan 12 hari)
 - PATCH `/api/cuti/{id}/status/` — approve/reject (Manajer only)
 - Field: `id`, `pegawai_id`, `tgl_mulai`, `tgl_selesai`, `alasan`, `status` (`PENDING`/`APPROVED`/`REJECTED`)
 
@@ -165,6 +166,7 @@ CREATE TABLE pegawai (
   nama_lengkap VARCHAR(200) NOT NULL,
   jabatan VARCHAR(100) NOT NULL,
   status ENUM('aktif','nonaktif') DEFAULT 'aktif',
+  kuota_cuti INT NOT NULL DEFAULT 12,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
@@ -425,6 +427,7 @@ Schema:
   nama_lengkap: STRING(200), allowNull false
   jabatan: STRING(100), allowNull false
   status: ENUM('aktif','nonaktif'), defaultValue 'aktif'
+  kuota_cuti: INTEGER, defaultValue 12, allowNull false
 Export: function(sequelize, DataTypes) → model
 
 FILE 2: backend/src/models/cuti.model.js
@@ -572,11 +575,15 @@ Functions:
    - Pegawai: filter cuti miliknya sendiri
    - Role lain: ambil semua cuti, include Pegawai
    - Return 200 array
-2. create(req, res):
+2. getKuota(req, res):
+   - Khusus role pegawai, hitung total kuota (12 hari), cuti approved & pending tahun ini, dan sisa kuota
+   - Return 200 { tahun, kuota_tahunan: 12, cuti_approved_hari, cuti_pending_hari, sisa_kuota }
+3. create(req, res):
    - Khusus role pegawai (403 jika role lain)
    - Validasi: tgl_selesai >= tgl_mulai, alasan wajib
+   - Validasi kuota cuti tahunan: durasi hari pengajuan <= sisa kuota tahunan (default 12 hari)
    - Cuti.create → return 201
-3. updateStatus(req, res):
+4. updateStatus(req, res):
    - Khusus role manajer (403 jika role lain)
    - Status harus APPROVED atau REJECTED
    - Update cuti berstatus PENDING → return 200
@@ -640,6 +647,7 @@ Buat file backend/src/routes/cuti.routes.js.
 
 Routes:
   GET    /           → authMiddleware → cutiController.getAll
+  GET    /kuota      → authMiddleware → roleMiddleware('pegawai') → cutiController.getKuota
   POST   /           → authMiddleware → roleMiddleware('pegawai') → cutiController.create
   PATCH  /:id/status → authMiddleware → roleMiddleware('manajer') → cutiController.updateStatus
 
@@ -1003,6 +1011,7 @@ Buat 2 halaman modul Pengajuan Cuti bertema Eduparx:
 FILE 1: frontend/src/pages/CutiListPage.jsx
 - Wrap dalam <Layout>
 - Hero banner: "Pengajuan Cuti & Izin Kerja Pegawai PT INIX"
+- Banner ringkasan kuota tahunan: Kuota 12 Hari (data-testid="kuota-tahunan"), Sisa Kuota (data-testid="sisa-kuota-cuti")
 - Button "Ajukan Cuti Baru": data-testid="btn-ajukan-cuti" (visible untuk role pegawai)
 - Tabel cuti: data-testid="cuti-table"
   - Kolom: Nama Pegawai, Tanggal Mulai, Tanggal Selesai, Alasan, Status, Aksi
@@ -1015,13 +1024,15 @@ FILE 1: frontend/src/pages/CutiListPage.jsx
 FILE 2: frontend/src/pages/CutiFormPage.jsx
 - Wrap dalam <Layout>
 - Card container form ajukan cuti
+- Ringkasan kuota cuti tahunan (12 hari) & sisa kuota (data-testid="sisa-kuota-cuti")
+- Indikator estimasi durasi cuti realtime (data-testid="durasi-cuti")
 - Form fields + data-testid:
   - input-tgl-mulai (type="date")
   - input-tgl-selesai (type="date")
   - input-alasan (textarea)
   - btn-submit-cuti
   - validation-error (role="alert")
-- Client validation: tgl_selesai >= tgl_mulai, alasan min 3 karakter
+- Client validation: tgl_selesai >= tgl_mulai, alasan min 3 karakter, durasi <= sisa kuota
 - Integrasi POST /api/cuti/
 
 Berikan isi lengkap kedua file.

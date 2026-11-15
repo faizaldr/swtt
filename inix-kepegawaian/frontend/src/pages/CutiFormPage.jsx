@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import api from '../services/api';
@@ -12,8 +12,39 @@ export default function CutiFormPage() {
     alasan: ''
   });
 
+  const [kuotaInfo, setKuotaInfo] = useState(null);
+  const [durasiHari, setDurasiHari] = useState(0);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    async function loadKuota() {
+      try {
+        const res = await api.get('/cuti/kuota');
+        setKuotaInfo(res.data);
+      } catch (err) {
+        console.error('Gagal memuat kuota cuti:', err);
+      }
+    }
+    loadKuota();
+  }, []);
+
+  // Hitung durasi hari secara realtime
+  useEffect(() => {
+    if (formData.tgl_mulai && formData.tgl_selesai) {
+      const start = new Date(formData.tgl_mulai);
+      const end = new Date(formData.tgl_selesai);
+      if (end >= start) {
+        const diffTime = Math.abs(end - start);
+        const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        setDurasiHari(days);
+      } else {
+        setDurasiHari(0);
+      }
+    } else {
+      setDurasiHari(0);
+    }
+  }, [formData.tgl_mulai, formData.tgl_selesai]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -39,6 +70,11 @@ export default function CutiFormPage() {
       return;
     }
 
+    if (kuotaInfo && durasiHari > kuotaInfo.sisa_kuota) {
+      setError(`Durasi pengajuan (${durasiHari} hari) melebihi sisa kuota cuti tahunan Anda (${kuotaInfo.sisa_kuota} hari dari total 12 hari).`);
+      return;
+    }
+
     try {
       setSubmitting(true);
       await api.post('/cuti', formData);
@@ -57,9 +93,25 @@ export default function CutiFormPage() {
       heroSubtitle="Tentukan rentang tanggal dan alasan permohonan cuti untuk ditinjau oleh Manajer."
     >
       <div className="form-card">
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem', color: '#162447' }}>
-          Pengajuan Permohonan Cuti Baru
-        </h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.5rem' }}>
+          <div>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#162447', marginBottom: '0.25rem' }}>
+              Pengajuan Permohonan Cuti Baru
+            </h2>
+            <p style={{ fontSize: '0.85rem', color: '#64748b' }}>
+              Standar hak cuti tahunan reguler: 12 hari kerja per tahun
+            </p>
+          </div>
+
+          {kuotaInfo && (
+            <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '6px', padding: '6px 12px', textAlign: 'right' }}>
+              <span style={{ fontSize: '0.75rem', color: '#1e40af', display: 'block', fontWeight: 600 }}>SISA KUOTA TAHUNAN</span>
+              <strong style={{ fontSize: '1.1rem', color: '#204ecf' }} data-testid="sisa-kuota-cuti">
+                {kuotaInfo.sisa_kuota} / {kuotaInfo.kuota_tahunan || 12} Hari
+              </strong>
+            </div>
+          )}
+        </div>
 
         {error && (
           <div className="alert-box alert-error" role="alert" data-testid="validation-error">
@@ -95,6 +147,15 @@ export default function CutiFormPage() {
               required
             />
           </div>
+
+          {durasiHari > 0 && (
+            <div style={{ background: '#f8fafc', padding: '8px 12px', borderRadius: '6px', border: '1px solid #e2e8f0', marginBottom: '1.25rem', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between' }}>
+              <span>Estimasi Durasi Cuti:</span>
+              <strong style={{ color: kuotaInfo && durasiHari > kuotaInfo.sisa_kuota ? '#dc2626' : '#204ecf' }} data-testid="durasi-cuti">
+                {durasiHari} Hari Kerja
+              </strong>
+            </div>
+          )}
 
           <div className="form-group">
             <label htmlFor="alasan" className="form-label">Alasan / Keperluan Cuti</label>

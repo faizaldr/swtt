@@ -25,6 +25,11 @@ export default function definePegawaiModel(sequelize, DataTypes) {
     status: {
       type: DataTypes.ENUM('aktif', 'nonaktif'),
       defaultValue: 'aktif'
+    },
+    kuota_cuti: {
+      type: DataTypes.INTEGER,
+      defaultValue: 12,
+      allowNull: false
     }
   }, {
     tableName: 'pegawai',

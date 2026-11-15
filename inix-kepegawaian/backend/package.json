@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
+    "migrate": "node src/seeders/migrate.js",
     "seed": "node src/seeders/seed.js",
     "lint": "echo 'lint ok'",
     "test": "echo 'No unit tests - QA training app'"
@@ -15,6 +16,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^5.0.1",
+    "inix-kepegawaian": "file:..",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.11.5",
     "sequelize": "^6.37.5"
