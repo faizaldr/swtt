@@ -1110,6 +1110,7 @@ Berikan isi lengkap kedua file.
 
 **[N] NARROWING / CONSTRAINTS:**
 
+- JANGAN jalankan perintah terminal menggunakan PowerShell, gunakan perintah terminal dengan CMD
 - **JANGAN** menggunakan Tailwind CSS atau library CSS berat lainnya — gunakan **Pure CSS** (`index.css`) agar kode ringkas, performan, dan mudah di-inspect DevTools.
 - **JANGAN** menghilangkan atribut `data-testid` pada element apa pun.
 - **JANGAN** mengubah arsitektur endpoint backend (tetap Express + Sequelize + MySQL).
