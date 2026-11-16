@@ -105,6 +105,40 @@ Password:
   [ Invalid Partition 2: Password salah / tidak cocok ]
 ```
 
+> **Panduan Prompt AI (RISEN Framework): Menghasilkan Test Case EP & BVA Form Login**
+>
+> Jika Anda menggunakan asisten AI (seperti ChatGPT, Claude, atau Gemini), gunakan prompt terstruktur RISEN berikut untuk menghasilkan analisis partisi ekuivalen dan batas nilai:
+>
+> ```markdown
+> [R] ROLE:
+> Bertindaklah sebagai Senior QA Test Design Specialist dengan sertifikasi ISTQB Advanced Test Analyst.
+> 
+> [I] INPUT:
+> Fitur: Form Login Aplikasi Kepegawaian PT INIX
+> Aturan Spesifikasi:
+> 1. Username berupa alamat email yang valid dan terdaftar.
+> 2. Password memiliki panjang minimal 8 karakter dan maksimal 64 karakter.
+> 3. Akun nonaktif tidak diizinkan masuk dan mendapat respon 403 Forbidden.
+> 4. Kredensial salah menghasilkan respon 401 Unauthorized tanpa membocorkan detail field mana yang salah.
+> 
+> [S] STEPS:
+> 1. Identifikasi kelas ekuivalen valid dan invalid (Equivalence Partitioning) untuk field username dan password.
+> 2. Lakukan Boundary Value Analysis (BVA) 2-point dan 3-point untuk field password (min 8, max 64 karakter).
+> 3. Hasilkan 10 test case terstruktur dengan format kolom: TC ID, Module, Scenario, Precondition, Test Steps, Test Data, Expected Result, Priority, Severity, Test Type.
+> 
+> [E] EXPECTATION:
+> 1. Output tabel Markdown yang siap disalin ke spreadsheet pengujian (Format ID: TC-AUTH-001 s.d. TC-AUTH-010) dalam Bahasa Indonesia formal.
+> 2. Rekomendasi Tools & Extensions:
+>    - Tool Manajemen Test Case: TestRail, Zephyr Scale, atau Xray Jira Plugin.
+>    - Browser Extensions QA: Bug Magnet (injeksi cepat string boundary/karakter khusus), Fake Data Generator, Form Filler.
+> 3. Rekomendasi Metode & Best Practices:
+>    - Terapkan 2-Point Boundary Testing (pada batas dan tepat di luar batas) untuk efisiensi jumlah test case tanpa mengurangi coverage.
+>    - Klasifikasikan prioritas High pada skenario batas bawah kritis (8 karakter) karena rentan celah brute force/validasi form.
+> 
+> [N] NARROWING:
+> Batasi hanya pada pengujian level fungsional form login (EP & BVA). Jangan menyertakan SQL Injection atau brute force test pada bagian ini.
+> ```
+
 #### Tugas 1A: Buat 5 Test Case EP (TC-AUTH-001 s.d. TC-AUTH-005)
 Rancang 5 test case pada Sheet `Test_Cases`:
 - **TC-AUTH-001:** Login dengan username & password valid (Positive Case).
@@ -141,6 +175,49 @@ $$\text{Batas Atas: } 63 \text{ char (Valid, Max}-1), \quad 64 \text{ char (Vali
 5. **Kondisi 5 (C5):** Durasi Cuti $\le$ Sisa Kuota Cuti Tahunan (Maksimal 12 Hari).
 
 ### 2.2 Buat Matriks Decision Table di Sheet 2 (`Decision_Table`)
+
+> **Panduan Prompt AI (RISEN Framework): Menghasilkan Decision Table Logika Cuti**
+>
+> Manfaatkan prompt RISEN di bawah ini untuk menghasilkan matriks kombinasi kondisi dan aksi:
+>
+> ```markdown
+> [R] ROLE:
+> Bertindaklah sebagai Lead QA Engineer ahli pemodelan logika bisnis dan teknik pengujian berbasis spesifikasi (Decision Table Testing).
+> 
+> [I] INPUT:
+> Modul: Pengajuan Cuti Tahunan PT INIX
+> Kondisi Bisnis:
+> - C1: Role user = Pegawai (Y/T)
+> - C2: Tanggal Mulai >= Hari Ini (Y/T)
+> - C3: Tanggal Selesai >= Tanggal Mulai (Y/T)
+> - C4: Alasan Cuti diisi >= 3 karakter (Y/T)
+> - C5: Durasi Hari Cuti <= Sisa Kuota Cuti Tahunan (Maksimal 12 Hari) (Y/T)
+> 
+> Aksi Bisnis:
+> - A1: Pengajuan Diterima (HTTP 201 Created, Status PENDING)
+> - A2: Error Alasan Wajib Diisi (HTTP 400 Bad Request)
+> - A3: Error Rentang Tanggal Tidak Valid (HTTP 400 Bad Request)
+> - A4: Error Tanggal Masa Lalu (HTTP 400 Bad Request)
+> - A5: Error Kuota Cuti Tidak Cukup (HTTP 400 Bad Request)
+> - A6: Error Akses Ditolak (HTTP 403 Forbidden)
+> 
+> [S] STEPS:
+> 1. Buat tabel kebenaran / matriks Decision Table dengan kolom Rule 1 sampai Rule 6 yang mencakup skenario Happy Path dan setiap variasi kondisi salah.
+> 2. Lakukan simplifikasi aturan (*collapsing rules*) untuk kondisi yang tidak relevan (ditandai tanda strip '-').
+> 3. Petakan masing-masing Rule menjadi spesifikasi test case terperinci (TC-CUT-001 s.d. TC-CUT-006).
+> 
+> [E] EXPECTATION:
+> 1. Output berupa 2 bagian: Matriks Decision Table format Markdown (Kondisi C1-C5 dan Aksi A1-A6) dan tabel daftar Test Case siap pakai (TC-CUT-001 s.d. TC-CUT-006).
+> 2. Rekomendasi Tools & Plugins:
+>    - Pemodelan Tabel Keputusan: Decision Table Generator Plugin, MS Excel Boolean Logic Formulation, Miro / Draw.io untuk visualisasi pohon keputusan.
+>    - Test Matrix Management: Google Sheets Conditional Formatting untuk validasi kombinasi Y/T.
+> 3. Rekomendasi Metode & Best Practices:
+>    - Teknik Cause-Effect Graphing untuk memetakan dependensi antar kondisi sebelum menyusun tabel.
+>    - Penerapan Rule Simplification (Collapsing Rules) agar test case tetap efisien tanpa redundansi kombinasi kondisi yang mustahil (don't care conditions '-').
+> 
+> [N] NARROWING:
+> Fokus hanya pada aturan pengajuan cuti tahunan reguler. Abaikan cuti khusus (melahirkan/menikah) pada iterasi ini.
+> ```
 
 Gunakan format tabel berikut pada Sheet 2:
 
@@ -187,6 +264,44 @@ Pindahkan 6 Rules di atas menjadi **TC-CUT-001 s.d. TC-CUT-006** di sheet `Test_
 
 ### 3.2 Matriks State Transition (Valid vs Invalid)
 
+> **Panduan Prompt AI (RISEN Framework): Menghasilkan State Transition Test Suite**
+>
+> Gunakan prompt RISEN berikut untuk memodelkan siklus status dan transisi ilegal (*negative state transitions*):
+>
+> ```markdown
+> [R] ROLE:
+> Bertindaklah sebagai Senior QA Automation & Manual Test Architect berfokus pada State Transition Testing dan RBAC Lifecycle.
+> 
+> [I] INPUT:
+> Siklus Transisi Pengajuan Cuti PT INIX:
+> - State Awal: NEW (Form Input Pegawai)
+> - Submit Pengajuan -> PENDING
+> - Approval Manajer -> APPROVED (Final State, kuota dipotong)
+> - Rejection Manajer -> REJECTED (Final State, kuota utuh)
+> Aturan Otorisasi:
+> - Hanya Manajer yang berhak mengubah status PENDING ke APPROVED atau REJECTED.
+> - Data pada status APPROVED atau REJECTED tidak boleh diubah kembali (Immutable Final States).
+> 
+> [S] STEPS:
+> 1. Susun matriks transisi status memuat State Awal, Trigger/Event, State Tujuan, dan Validitas (Valid vs Invalid).
+> 2. Identifikasi 2 skenario transisi sah (Happy Path).
+> 3. Identifikasi 2 skenario transisi tidak sah: percobaan manipulasi data final dan percobaan bypass RBAC oleh Pegawai.
+> 4. Buat 4 test case lengkap dengan kode TC-CUT-007 s.d. TC-CUT-010.
+> 
+> [E] EXPECTATION:
+> 1. Tabel pengujian yang jelas memuat precondition state, peran aktor, trigger HTTP method/endpoint, dan respon sistem yang diharapkan.
+> 2. Rekomendasi Tools & Modeling Utilities:
+>    - Pemodelan State Machine: Mermaid.js, PlantUML, atau draw.io State Diagram.
+>    - API Execution & State Simulation: Postman Collection Runner / Newman untuk mengeksekusi request urut state (POST -> PATCH -> PATCH).
+> 3. Rekomendasi Metode & Best Practices:
+>    - 0-Switch Coverage (menguji setiap transisi status individual secara terisolasi).
+>    - 1-Switch Coverage (menguji urutan dua transisi berantai: NEW -> PENDING -> APPROVED) untuk validasi data lifecycle menyeluruh.
+>    - Boundary State Invalidation: Selalu sertakan test case percobaan transisi dari final state (APPROVED/REJECTED) ke status lain.
+> 
+> [N] NARROWING:
+> Pengujian berfokus murni pada logika transisi status data cuti dan pencegahan manipulasi status ilegal.
+> ```
+
 | State Awal | Aksi / Trigger | State Tujuan | Validitas Transisi |
 |---|---|---|:---:|
 | `NEW` | Submit form valid | `PENDING` | **Valid** |
@@ -213,6 +328,41 @@ Pada sheet **`Bug_Reports`**, buat dokumentasi pelaporan 3 cacat (*bug*) fiktif 
 3. **Bug 3 (Modul Pengajuan Cuti):** Cacat kalkulasi kuota atau workflow tingkat *Major*.
 
 ### 4.1 Header 12 Field Standar Sheet `Bug_Reports`
+
+> **Panduan Prompt AI (RISEN Framework): Menghasilkan Bug Report Standar Industri**
+>
+> Gunakan prompt RISEN di bawah ini untuk menghasilkan deskripsi bug report berkualitas tinggi:
+>
+> ```markdown
+> [R] ROLE:
+> Bertindaklah sebagai Lead QA Engineer yang berpengalaman menulis Bug Report berstandar IEEE 829 / Jira Bug Template untuk tim software engineering.
+> 
+> [I] INPUT:
+> Temuan Pengujian Aplikasi Kepegawaian PT INIX:
+> 1. Temuan 1 (Keamanan): User role Pegawai dapat menghapus data pegawai lain via DELETE /api/pegawai/{id}.
+> 2. Temuan 2 (Integritas Data): Input NIP duplikat memicu crash 500 Internal Server Error dengan Sequelize error.
+> 3. Temuan 3 (Logika Bisnis): Pengajuan cuti durasi melebihi sisa kuota 12 hari berhasil tersimpan (status PENDING).
+> 
+> [S] STEPS:
+> 1. Tentukan tingkat Severity (Critical, Major, Minor) dan Priority (P1, P2, P3) untuk masing-masing temuan.
+> 2. Tuliskan judul bug yang informatif dengan pola: [Kategori] + [Lokasi Fitur] + [Perilaku Cacat].
+> 3. Uraikan Precondition, Steps to Reproduce bernomor yang mudah ditiru oleh developer, Expected Result, dan Actual Result secara objektif.
+> 4. Lengkapi dengan 12 atribut standar: Bug ID, Title, Module, Severity, Priority, Environment, Precondition, Steps to Reproduce, Expected Result, Actual Result, Reporter, Status.
+> 
+> [E] EXPECTATION:
+> 1. Format teks terstruktur blok monospace atau tabel Markdown yang siap disalin ke sheet Bug_Reports atau sistem issue tracker (Jira / Linear / GitHub Issues).
+> 2. Rekomendasi Tools & Extensions Penunjang Bug Reporting:
+>    - Issue Tracking Systems: Jira Software, Linear, GitHub Issues, ClickUp.
+>    - Bukti Bukti Visual & Screen Recording: Jam.dev (merekam video + log console/network otomatis), Loom, Lightshot, Awesome Screenshot.
+>    - Log & Network Inspection: Chrome DevTools Network Tab (simpan HAR file) & Console log error stack trace.
+> 3. Rekomendasi Metode & Best Practices Pelaporan Bug:
+>    - Formula Judul Baku: `[Komponen/Modul] - [Aksi Pengguna] - [Hasil Tidak Sesuai/Error Code]` agar developer langsung memahami konteks masalah tanpa membuka tiket.
+>    - Aturan Isolasi Bug: 1 Bug Ticket = 1 Masalah Tunggal (Single Issue Isolation). Jangan menggabungkan dua bug berbeda dalam satu tiket.
+>    - Severity vs Priority Matrix: Terapkan pemisahan tegas antara dampak teknis sistem (*Severity*) dan urgensi bisnis untuk perbaikan (*Priority*).
+> 
+> [N] NARROWING:
+> Hindari kalimat ambigu atau opini subjektif. Gunakan data teknis eksplisit (endpoint HTTP, status code, format payload, nama komponen).
+> ```
 
 | No | Nama Kolom | Definisi |
 |:---:|---|---|
